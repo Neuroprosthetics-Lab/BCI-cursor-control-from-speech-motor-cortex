@@ -2,13 +2,17 @@
 
 This repo is contains code and data for [Singer-Clark et al. 2025, Speech motor cortex enables BCI cursor control and click](https://doi.org/10.1088/1741-2552/add0e5).
 
+Contact Tyler at tsingerclark@ucdavis.edu if you have any questions.
+
 ## Data
 
 ### Downloading the data
 
 Data can be found [here, hosted on Dryad](TODO: put Dryad doi here).
 
-In a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`), and run the command `TODO` to download the data from Dryad into a folder named `dryad_files/` inside this repo. The Python scripts in this repo assume that is the location of the data.
+Download and unzip the data from Dryad into a folder named `dryad_files/` inside this repo. The Python scripts in this repo assume that is the location of the data.
+
+If on Linux, to do this automatically from a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`) and run the command `TODO`.
 
 ### Data format
 

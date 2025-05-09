@@ -71,12 +71,12 @@ def main():
     ## Load the blocks of data from the First-ever Usage Session.
 
     filepaths = [
-        "./dryad_files/t15_day00039/block0_radial8_calibration_task.mat",
-        "./dryad_files/t15_day00039/block1_radial8_calibration_task.mat",
-        "./dryad_files/t15_day00039/block2_radial8_calibration_task.mat",
-        "./dryad_files/t15_day00039/block3_radial8_calibration_task.mat",
-        "./dryad_files/t15_day00039/block4_radial8_calibration_task.mat",
-        "./dryad_files/t15_day00039/block5_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block00_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block01_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block02_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block03_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block04_radial8_calibration_task.mat",
+        "./dryad_files/t15_day00039_block05_radial8_calibration_task.mat",
     ]
     try:
         data = [scipy.io.loadmat(filepath) for filepath in filepaths]
@@ -134,8 +134,8 @@ def main():
             unique_target_positions.add(tuple(trial_target))
 
     # Draw the target circles.
-    target_radius = data[0]["target_radius"]
-    cursor_radius = data[0]["cursor_radius"]
+    target_radius = data[0]["target_radius"].item()
+    cursor_radius = data[0]["cursor_radius"].item()
     touching_radius = target_radius + cursor_radius
     for target_position in unique_target_positions:
         if not np.array_equal(target_position, np.array([0, 0])):
