@@ -196,9 +196,13 @@ def main():
         SMOOTHING_SIGMA = 5
         firing_rates = gaussian_filter1d(firing_rates, sigma=SMOOTHING_SIGMA, axis=0)
 
+        total_bins = len(firing_rates)
+
         for trial_start_bin in trial_start_bins:
-            # Only include center-out trials (the user cannot anticipate the target).
             trial_target = target_positions[trial_start_bin]
+
+            # Skip trials toward the center target (the user can anticipate the target).
+            CENTER_TARGET = np.array([0.0, 0.0])
             is_toward_center_target = np.all(trial_target == CENTER_TARGET)
             if is_toward_center_target:
                 continue
@@ -206,8 +210,7 @@ def main():
             neural_window_start_bin = trial_start_bin - PRE_GO_CUE_bins
             neural_window_end_bin = trial_start_bin + POST_GO_CUE_bins
 
-            # Skip trials at the start or end of the block which go outside the block.
-            total_bins = len(firing_rates)
+            # Skip windows at the start or end of the block which go outside the block.
             if neural_window_start_bin < 0 or neural_window_end_bin > total_bins:
                 continue
 

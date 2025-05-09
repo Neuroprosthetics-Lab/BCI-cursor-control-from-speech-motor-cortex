@@ -1,5 +1,7 @@
 import numpy as np
 import scipy.io
+from scipy.ndimage import gaussian_filter1d
+from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 
 
@@ -30,6 +32,7 @@ TRAJECTORY_COLORS = [
     (0.55568627, 0.417647059, 0.735294119),
     (0.92352941, 0.36274510, 0.69215686),
 ]
+PROMPTS = ["bah", "though", "day", "kite", "choice", "veto", "were"]
 PROMPT_COLORS = {
     "bah": (0.71, 0.84, 0.44),
     "though": (0.75, 0.5, 0.75),
@@ -139,7 +142,7 @@ def main():
             trial_end_bin = trial_end_bins[trial_idx]
 
             # If there was no beep in this trial, the speech go cue bin is -1.
-            is_beep_trial = speech_go_cue_bin > 0
+            is_beep_trial = speech_go_cue_bin != -1
 
             trial_end_timestamp = timestamps[trial_end_bin]
             cursor_go_cue_timestamp = timestamps[cursor_go_cue_bin]
@@ -244,6 +247,298 @@ def main():
     fig.subplots_adjust(top=0.95, bottom=0.2, left=0.2)
 
     plt.show()
+
+    ## Trial-average the neural activity, aligned to different stages of the trial.
+
+    presentation_windows_grouped_by_direction = {
+        direction_idx: [] for direction_idx in range(8)
+    }
+    cursor_go_cue_windows_grouped_by_direction = {
+        direction_idx: [] for direction_idx in range(8)
+    }
+    speech_go_cue_windows_grouped_by_prompt = {prompt: [] for prompt in PROMPTS}
+
+    PRE_GO_CUE_sec = 0.5
+    POST_GO_CUE_sec = 1.0
+
+    BIN_WIDTH_sec = 0.01
+    PRE_GO_CUE_bins = int(PRE_GO_CUE_sec / BIN_WIDTH_sec)
+    POST_GO_CUE_bins = int(POST_GO_CUE_sec / BIN_WIDTH_sec)
+
+    for block_data in data:
+        threshold_crossings = block_data["threshold_crossings"]
+        target_positions = block_data["target_position"]
+        target_presentation_bins = block_data["target_presentation_bin"].flatten()
+        cursor_go_cue_bins = block_data["cursor_go_cue_bin"].flatten()
+        speech_go_cue_bins = block_data["speech_go_cue_bin"].flatten()
+        speech_prompts = [s.item() for s in block_data["speech_prompt"].flatten()]
+        is_control_block = block_data["is_control_block"].item()
+        is_verbal_block = not is_control_block
+
+        # Scale threshold crossings values to represent firing rates in Hz.
+        firing_rates = threshold_crossings / BIN_WIDTH_sec
+        # Apply smoothing.
+        SMOOTHING_SIGMA = 5
+        firing_rates = gaussian_filter1d(firing_rates, sigma=SMOOTHING_SIGMA, axis=0)
+
+        total_bins = len(firing_rates)
+
+        ## Windows aligned to target presentation and to cursor go cue.
+
+        for trial_idx in range(len(target_presentation_bins)):
+            target_presentation_bin = target_presentation_bins[trial_idx]
+            cursor_go_cue_bin = cursor_go_cue_bins[trial_idx]
+            speech_go_cue_bin = speech_go_cue_bins[trial_idx]
+
+            # Skip trials with a beep.
+            if speech_go_cue_bin != -1:
+                continue
+
+            trial_target = target_positions[target_presentation_bin]
+
+            # Skip trials toward the center target (the user can anticipate the target).
+            CENTER_TARGET = np.array([0.0, 0.0])
+            is_toward_center_target = np.all(trial_target == CENTER_TARGET)
+            if is_toward_center_target:
+                continue
+
+            direction_idx = get_direction_idx_from_vector(trial_target)
+
+            # Window aligned to target presentation.
+
+            presentation_window_start_bin = target_presentation_bin - PRE_GO_CUE_bins
+            presentation_window_end_bin = target_presentation_bin + POST_GO_CUE_bins
+
+            presentation_window = firing_rates[
+                presentation_window_start_bin:presentation_window_end_bin
+            ]
+
+            presentation_windows_grouped_by_direction[direction_idx].append(
+                presentation_window
+            )
+
+            # Window aligned to cursor go cue.
+
+            cursor_go_cue_window_start_bin = cursor_go_cue_bin - PRE_GO_CUE_bins
+            cursor_go_cue_window_end_bin = cursor_go_cue_bin + POST_GO_CUE_bins
+
+            cursor_go_cue_window = firing_rates[
+                cursor_go_cue_window_start_bin:cursor_go_cue_window_end_bin
+            ]
+
+            cursor_go_cue_windows_grouped_by_direction[direction_idx].append(
+                cursor_go_cue_window
+            )
+
+        ## Windows aligned to speech go cue.
+
+        for trial_idx in range(len(speech_go_cue_bins)):
+            speech_go_cue_bin = speech_go_cue_bins[trial_idx]
+            speech_prompt = speech_prompts[trial_idx]
+
+            # Skip trials with no beep.
+            if speech_go_cue_bin == -1:
+                continue
+
+            # Skip trials in control blocks (since control blocks don't have speech).
+            if is_control_block:
+                continue
+
+            speech_go_cue_window_start_bin = speech_go_cue_bin - PRE_GO_CUE_bins
+            speech_go_cue_window_end_bin = speech_go_cue_bin + POST_GO_CUE_bins
+
+            # Skip windows at the end of the block which go outside the block.
+            if speech_go_cue_window_end_bin > total_bins:
+                continue
+
+            speech_go_cue_window = firing_rates[
+                speech_go_cue_window_start_bin:speech_go_cue_window_end_bin
+            ]
+
+            speech_go_cue_windows_grouped_by_prompt[speech_prompt].append(
+                speech_go_cue_window
+            )
+
+    # Average across trials.
+    presentation_trial_averaged_by_direction = {
+        direction_idx: np.mean(neural_windows, axis=0)
+        for direction_idx, neural_windows in presentation_windows_grouped_by_direction.items()
+    }
+    cursor_go_cue_trial_averaged_by_direction = {
+        direction_idx: np.mean(neural_windows, axis=0)
+        for direction_idx, neural_windows in cursor_go_cue_windows_grouped_by_direction.items()
+    }
+    speech_go_cue_trial_averaged_by_prompt = {
+        prompt: np.mean(neural_windows, axis=0)
+        for prompt, neural_windows in speech_go_cue_windows_grouped_by_prompt.items()
+    }
+    # Get the standard error of the mean.
+    presentation_sem_by_direction = {
+        direction_idx: np.std(neural_windows, axis=0) / np.sqrt(len(neural_windows))
+        for direction_idx, neural_windows in presentation_windows_grouped_by_direction.items()
+    }
+    cursor_go_cue_sem_by_direction = {
+        direction_idx: np.std(neural_windows, axis=0) / np.sqrt(len(neural_windows))
+        for direction_idx, neural_windows in cursor_go_cue_windows_grouped_by_direction.items()
+    }
+    speech_go_cue_sem_by_direction = {
+        prompt: np.std(neural_windows, axis=0) / np.sqrt(len(neural_windows))
+        for prompt, neural_windows in speech_go_cue_windows_grouped_by_prompt.items()
+    }
+
+    ## Plot individual channels' trial-averaged firing rates aligned to different stages
+    ## of the trial.
+
+    SELECTED_ELECTRODES = [229, 165, 247]
+    num_bins_in_window = int((PRE_GO_CUE_sec + POST_GO_CUE_sec) / BIN_WIDTH_sec)
+    relative_timestamps = np.linspace(
+        -PRE_GO_CUE_sec, POST_GO_CUE_sec, num_bins_in_window
+    )
+
+    for electrode_idx in SELECTED_ELECTRODES:
+        fig, (presentation_ax, cursor_go_cue_ax, speech_go_cue_ax) = plt.subplots(1, 3)
+
+        # Plot activity aligned to target presentation.
+        for direction_idx in range(8):
+            trial_averaged = presentation_trial_averaged_by_direction[direction_idx][
+                :, electrode_idx
+            ]
+            sem = presentation_sem_by_direction[direction_idx][:, electrode_idx]
+            color = TARGET_COLORS[direction_idx]
+            presentation_ax.plot(
+                relative_timestamps, trial_averaged, color=color, linewidth=2
+            )
+            presentation_ax.fill_between(
+                relative_timestamps,
+                trial_averaged - sem,
+                trial_averaged + sem,
+                color=color,
+                alpha=0.1,
+                edgecolor="none",
+            )
+
+            # Add a dot for the target presentation.
+            presentation_ax.scatter(
+                [0.0], [-4.0], marker="o", s=95, color=(0.2, 0.2, 0.2), clip_on=False
+            )
+            presentation_ax.text(
+                0.0, -9.0, "target\npresentation", ha="center", va="top", fontsize=16
+            )
+
+            # Add a scale bar for time.
+            presentation_ax.hlines(
+                -4.0,
+                POST_GO_CUE_sec - 0.5,
+                POST_GO_CUE_sec,
+                color=(0.2, 0.2, 0.2),
+                linewidth=3,
+                clip_on=False,
+            )
+            presentation_ax.text(
+                POST_GO_CUE_sec,
+                -7.0,
+                f"{int(0.5 * 1000)} ms",
+                ha="right",
+                va="top",
+                fontsize=14,
+            )
+
+            # Style the plot.
+            presentation_ax.set_xlim(-PRE_GO_CUE_sec, POST_GO_CUE_sec)
+            presentation_ax.tick_params(bottom=False, labelbottom=False)
+            presentation_ax.set_ylim(0, 85)
+            presentation_ax.set_yticks([0, 85])
+            presentation_ax.tick_params(axis="y", width=3, length=8, labelsize=20)
+            presentation_ax.set_ylabel("firing rate (Hz)", fontsize=24, labelpad=10)
+            presentation_ax.spines["top"].set_visible(False)
+            presentation_ax.spines["right"].set_visible(False)
+            presentation_ax.spines["bottom"].set_visible(False)
+            presentation_ax.spines["left"].set_position(("data", -PRE_GO_CUE_sec - 0.1))
+            presentation_ax.spines["left"].set_linewidth(3)
+
+        # Plot activity aligned to cursor go cue.
+        for direction_idx in range(8):
+            trial_averaged = cursor_go_cue_trial_averaged_by_direction[direction_idx][
+                :, electrode_idx
+            ]
+            sem = cursor_go_cue_sem_by_direction[direction_idx][:, electrode_idx]
+            color = TARGET_COLORS[direction_idx]
+            cursor_go_cue_ax.plot(
+                relative_timestamps, trial_averaged, color=color, linewidth=2
+            )
+            cursor_go_cue_ax.fill_between(
+                relative_timestamps,
+                trial_averaged - sem,
+                trial_averaged + sem,
+                color=color,
+                alpha=0.1,
+                edgecolor="none",
+            )
+
+            # Add a dot for the cursor go cue.
+            cursor_go_cue_ax.scatter(
+                [0.0], [-4.0], marker="o", s=95, color=(0.2, 0.2, 0.2), clip_on=False
+            )
+            cursor_go_cue_ax.text(
+                0.0, -9.0, "cursor\ngo cue", ha="center", va="top", fontsize=16
+            )
+
+            # Style the plot.
+            cursor_go_cue_ax.set_xlim(-PRE_GO_CUE_sec, POST_GO_CUE_sec)
+            cursor_go_cue_ax.set_ylim(0, 85)
+            cursor_go_cue_ax.tick_params(
+                left=False, bottom=False, labelleft=False, labelbottom=False
+            )
+            cursor_go_cue_ax.spines["top"].set_visible(False)
+            cursor_go_cue_ax.spines["right"].set_visible(False)
+            cursor_go_cue_ax.spines["bottom"].set_visible(False)
+            cursor_go_cue_ax.spines["left"].set_visible(False)
+
+        # Plot activity aligned to speech go cue.
+        for prompt in PROMPTS:
+            trial_averaged = speech_go_cue_trial_averaged_by_prompt[prompt][
+                :, electrode_idx
+            ]
+            sem = speech_go_cue_sem_by_direction[prompt][:, electrode_idx]
+            color = PROMPT_COLORS[prompt]
+            speech_go_cue_ax.plot(
+                relative_timestamps, trial_averaged, color=color, linewidth=2
+            )
+            speech_go_cue_ax.fill_between(
+                relative_timestamps,
+                trial_averaged - sem,
+                trial_averaged + sem,
+                color=color,
+                alpha=0.1,
+                edgecolor="none",
+            )
+
+            # Add a dot for the speech go cue.
+            speech_go_cue_ax.scatter(
+                [0.0], [-4.0], marker="o", s=95, color=(0.2, 0.2, 0.2), clip_on=False
+            )
+            speech_go_cue_ax.text(
+                0.0, -9.0, "speech\ngo cue", ha="center", va="top", fontsize=16
+            )
+
+            # Style the plot.
+            speech_go_cue_ax.set_xlim(-PRE_GO_CUE_sec, POST_GO_CUE_sec)
+            speech_go_cue_ax.set_ylim(0, 85)
+            speech_go_cue_ax.tick_params(
+                left=False, bottom=False, labelleft=False, labelbottom=False
+            )
+            speech_go_cue_ax.spines["top"].set_visible(False)
+            speech_go_cue_ax.spines["right"].set_visible(False)
+            speech_go_cue_ax.spines["bottom"].set_visible(False)
+            speech_go_cue_ax.spines["left"].set_visible(False)
+
+        array_label = data[0]["array_label_by_electrode"][electrode_idx].strip()
+        fig.suptitle(f"electrode {electrode_idx}\n(array {array_label})", fontsize=35)
+        fig.set_figwidth(13)
+        fig.set_figheight(5)
+        fig.subplots_adjust(bottom=0.2, left=0.16, wspace=0.12)
+
+        plt.show()
 
 
 if __name__ == "__main__":
