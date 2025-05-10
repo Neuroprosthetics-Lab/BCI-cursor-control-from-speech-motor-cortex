@@ -78,7 +78,8 @@ def get_direction_idx_from_vector(vector):
 def main():
     """"""
 
-    ## Load the radial8 blocks of data from the Simultaneous Speech and Cursor Session.
+    ## Load the simul task blocks of data from the Simultaneous Speech and Cursor
+    ## Session.
 
     filepaths = [
         "./dryad_files/t15_day00202_block02_simultaneous_speech_and_cursor_task.mat",
@@ -169,7 +170,7 @@ def main():
         verbal_blocks_nobeep_trials,
         verbal_blocks_beep_trials,
     ]
-    condition_x_positions = [0.5, 1.6, 3.0, 4.1]
+    condition_x_positions = [0.5, 1.5, 3.0, 4.0]
     condition_trial_types = [
         "no beep\ntrials",
         "beep\ntrials",
@@ -187,12 +188,12 @@ def main():
         condition_trial_times,
         positions=condition_x_positions,
         tick_labels=condition_trial_types,
-        widths=0.7,
+        widths=0.5,
         patch_artist=True,
         medianprops={"color": "white", "linewidth": 4},
         flierprops={
             "markerfacecolor": (0.5, 0.5, 0.5),
-            "markersize": 9,
+            "markersize": 6,
             "markeredgecolor": "none",
             "clip_on": False,
         },
@@ -206,28 +207,28 @@ def main():
     # Style the plots.
 
     ax.set_xlim(-0.25, 4.6)
-    ax.tick_params(axis="x", labelsize=30, length=0, pad=-120)
+    ax.tick_params(axis="x", labelsize=16, length=0, pad=-55)
     ax.set_xticklabels(ax.get_xticklabels(), weight="bold")
     for tick_idx, tick in enumerate(ax.get_xticklabels()):
         tick.set_color(condition_colors[tick_idx])
     ax.text(
         np.mean(condition_x_positions[:2]),
-        0.1,
+        -0.5,
         "control\nblocks",
         color=(0.4, 0.4, 0.4),
         ha="center",
         va="center",
-        fontsize=30,
+        fontsize=18,
         fontweight="bold",
     )
     ax.text(
         np.mean(condition_x_positions[-2:]),
-        0.1,
+        -0.5,
         "verbal\nblocks",
         color=(0.1, 0.1, 0.1),
         ha="center",
         va="center",
-        fontsize=30,
+        fontsize=18,
         fontweight="bold",
     )
 
@@ -235,17 +236,14 @@ def main():
     ax.set_yticks(
         np.arange(11), labels=[i if i in [0, 5, 10] else "" for i in np.arange(11)]
     )
-    ax.tick_params(axis="y", labelsize=40, pad=10)
-    ax.set_ylabel("target acquisition time (s)", fontsize=40, labelpad=10)
+    ax.tick_params(axis="y", labelsize=18)
+    ax.set_ylabel("target acquisition time (s)", fontsize=20, labelpad=10)
 
     ax.spines[["top", "right", "bottom"]].set_visible(False)
     ax.spines["left"].set_linewidth(3)
     ax.tick_params(axis="y", length=7, width=3)
 
-    fig.set_figheight(14)
-    fig.set_figwidth(11)
-    fig.subplots_adjust(top=0.95, bottom=0.2, left=0.2)
-
+    plt.tight_layout()
     plt.show()
 
     ## Trial-average the neural activity, aligned to different stages of the trial.
@@ -533,7 +531,7 @@ def main():
             speech_go_cue_ax.spines["left"].set_visible(False)
 
         array_label = data[0]["array_label_by_electrode"][electrode_idx].strip()
-        fig.suptitle(f"electrode {electrode_idx}\n(array {array_label})", fontsize=35)
+        fig.suptitle(f"electrode {electrode_idx}\n(array {array_label})", fontsize=20)
         fig.set_figwidth(13)
         fig.set_figheight(5)
         fig.subplots_adjust(bottom=0.2, left=0.16, wspace=0.12)
