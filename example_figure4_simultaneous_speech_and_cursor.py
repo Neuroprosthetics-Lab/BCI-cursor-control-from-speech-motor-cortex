@@ -78,8 +78,8 @@ def get_direction_idx_from_vector(vector):
 def main():
     """"""
 
-    ## Load the simul task blocks of data from the Simultaneous Speech and Cursor
-    ## Session.
+    ## Load the Simultaneous Speech and Cursor Task blocks of data from the Simultaneous
+    ## Speech and Cursor Session.
 
     filepaths = [
         "./dryad_files/t15_day00202_block02_simultaneous_speech_and_cursor_task.mat",
