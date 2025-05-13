@@ -4,15 +4,41 @@ This repo contains code and data for [Singer-Clark et al. 2025, Speech motor cor
 
 Contact Tyler at tsingerclark@ucdavis.edu if you have any questions.
 
+## Code
+
+### Setup
+
+Install the relevant dependencies (`numpy`, `scipy`, `matplotlib`, etc.) to your Python environment using `pip install -r requirements.txt`. It is recommended to use an environment manager such as `venv` or `conda` to create a standalone environment before installing dependencies.
+
+### Running examples
+
+This repo contains example scripts (e.g., `example_figure1_first_ever_cursor_BCI_usage.py`) which generate some figures from the paper. In addition to generating figures, these scripts also serve as boilerplate code from which you can develop your own analyses. These examples demonstrate how to load the data, extract relevant fields, and visualize things.
+
+1. In a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`).
+2. If using a `venv` or `conda` environment, activate it (e.g., `conda activate your_env_name`).
+3. Run an example script (e.g., `python example_figure1_first_ever_cursor_BCI_usage.py`).
+4. (Optional) If you prefer interactive notebooks, you can instead run the corresponding notebook (e.g., `example_figure1_first_ever_cursor_BCI_usage.ipynb`) using the notebook tool of your choice.
+
 ## Data
 
 ### Downloading the data
 
-Data can be found [here, hosted on Dryad](TODO: put Dryad doi here). The task and data are also described there.
+Data can be found [here, hosted on Dryad](https://doi.org/10.5061/dryad.prr4xgxzq).
 
-Download and unzip the data from Dryad into a folder named `dryad_files/` inside this repo. The Python scripts in this repo assume that is the location of the data.
+Download it automatically by running `python download_data.py`.
 
-If on Linux, to do this automatically from a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`) and run the command `TODO: wget the Dryad API URL as described here: https://datadryad.org/api and save the files to dryad_files/ folder`.
+Alternatively, you can manually download and unzip the data from Dryad into a folder named `dryad_files/` inside this repo. The Python scripts in this repo assume that is the location of the data.
+
+```
+BCI-cursor-control-from-speech-motor-cortex/
+--> dryad_files/
+    --> t15_day00039_block00_radial8_calibration_task.mat
+    --> t15_day00039_block01_radial8_calibration_task.mat
+    ...
+--> example_figure1_first_ever_cursor_BCI_usage.ipynb
+--> example_figure1_first_ever_cursor_BCI_usage.py
+...
+```
 
 ### Data format
 
@@ -94,18 +120,3 @@ print(block_data["target_position"].shape)
     - In the Grid Evaluation Task, this is the height (and width) of the full grid of targets, in the same length units as `cursor_position`, `target_position`, etc. In combination with `grid_num_rows`, this tells you the height (and width) of each grid target. For the cursor to be considered "touching" the cued target, `cursor_position` must be within the grid cell's width and height.
   - `is_control_block`
     - In the Simultaneous Speech and Cursor Task, this boolean says whether the block was a "control" block or "verbal" block. During "verbal" blocks the participant spoke after each speech go cue (a beep). During "control" blocks, the speech go cue (a beep) still occurred, but the participant did not speak.
-
-## Code
-
-### Setup
-
-Install the relevant dependencies (`numpy`, `scipy`, `matplotlib`, etc.) to your Python environment using `pip install -r requirements.txt`. It is recommended to use an environment manager such as `venv` or `conda` to create a standalone environment before installing dependencies.
-
-### Running examples
-
-This repo contains example scripts (e.g., `example_figure1_first_ever_cursor_BCI_usage.py`) which generate some figures from the paper. In addition to generating figures, these scripts also serve as boilerplate code from which you can develop your own analyses. These examples demonstrate how to load the data, extract relevant fields, and visualize things.
-
-1. In a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`).
-2. If using a `venv` or `conda` environment, activate it (e.g., `conda activate your_env_name`).
-3. Run an example script (e.g., `python example_figure1_first_ever_cursor_BCI_usage.py`).
-4. (Optional) If you prefer interactive notebooks, you can instead run the corresponding notebook (e.g., `example_figure1_first_ever_cursor_BCI_usage.ipynb`) using the notebook tool of your choice.
