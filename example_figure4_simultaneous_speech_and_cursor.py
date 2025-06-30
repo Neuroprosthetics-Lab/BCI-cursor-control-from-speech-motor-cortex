@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.io
 from scipy.ndimage import gaussian_filter1d
-from matplotlib.patches import Circle
 import matplotlib.pyplot as plt
 
 
