@@ -23,7 +23,7 @@ This repo contains example scripts (e.g., `example_figure1_first_ever_cursor_BCI
 
 ### Downloading the data
 
-Data can be found [here, hosted on Dryad](https://doi.org/10.5061/dryad.prr4xgxzq).
+Data can be found [here, hosted on Dryad](https://doi.org/10.5061/dryad.prr4xgxzq). (NOTE: Dryad publication pending. Code available for now without the data itself. Data will be available soon.)
 
 Download it automatically by running `python download_data.py`.
 
