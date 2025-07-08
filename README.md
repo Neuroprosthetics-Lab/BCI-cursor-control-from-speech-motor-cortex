@@ -4,6 +4,8 @@ This repo contains code and data for [Singer-Clark et al. 2025, Speech motor cor
 
 Contact Tyler at tsingerclark@ucdavis.edu if you have any questions.
 
+![Radial8 cursor trajectories.](./images/radial8_trajectories.png | width=100) ![Radial8 cursor trajectories.](./images/electrode_227.png | width=100)
+
 ## Code
 
 ### Setup
