@@ -18,16 +18,17 @@ This repo contains example scripts (e.g., `example_figure1_first_ever_cursor_BCI
 
 1. In a Terminal, navigate to this repo's root directory (`BCI-cursor-control-from-speech-motor-cortex/`).
 2. If using a `venv` or `conda` environment, activate it (e.g., `conda activate your_env_name`).
-3. Run an example script (e.g., `python example_figure1_first_ever_cursor_BCI_usage.py`).
-4. (Optional) If you prefer interactive notebooks, you can instead run the corresponding notebook (e.g., `example_figure1_first_ever_cursor_BCI_usage.ipynb`) using the notebook tool of your choice.
+3. Make sure you have the data downloaded from Dryad ([instructions in the following section](#downloading-the-data)).
+4. Run an example script (e.g., `python example_figure1_first_ever_cursor_BCI_usage.py`).
+5. (Optional) If you prefer interactive notebooks, you can instead run the corresponding notebook (e.g., `example_figure1_first_ever_cursor_BCI_usage.ipynb`) using the notebook tool of your choice.
 
 ## Data
 
 ### Downloading the data
 
-Data can be found [here, hosted on Dryad](https://doi.org/10.5061/dryad.prr4xgxzq). (NOTE: Dryad publication pending. Code available for now without the data itself. Data will be available soon.)
+Data can be found [here, hosted on Dryad](https://doi.org/10.5061/dryad.prr4xgxzq).
 
-Download it automatically by running `python download_data.py`.
+Download it automatically by running `python download_data.py`. This can take a few minutes. If you run into issues, see below for manual download.
 
 Alternatively, you can manually download and unzip the data from Dryad into a folder named `dryad_files/` inside this repo. The Python scripts in this repo assume that is the location of the data.
 

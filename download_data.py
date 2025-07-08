@@ -1,7 +1,19 @@
-import urllib.request
+"""
+Run this file to download data from Dryad. Downloaded files end up in this repostitory's
+dryad_files/ directory.
+
+First create the venv using the instructions in this repo's README.md. Then in a
+Terminal, at this repository's top-level directory
+(BCI-cursor-control-from-speech-motor-cortex/), run:
+
+source ./venv/bin/activate
+python download_data.py
+"""
+
 import sys
 import os
-import zipfile
+import urllib.request
+import json
 
 
 ########################################################################################
@@ -11,11 +23,14 @@ import zipfile
 ########################################################################################
 
 
-def display_progress_bar(block_num, block_size, total_size):
+def display_progress_bar(block_num, block_size, total_size, message=""):
     """"""
     bytes_downloaded_so_far = block_num * block_size
     MB_downloaded_so_far = bytes_downloaded_so_far / 1e6
-    sys.stdout.write(f"\r\t{MB_downloaded_so_far:.1f} MB")
+    MB_total = total_size / 1e6
+    sys.stdout.write(
+        f"\r{message}\t\t{MB_downloaded_so_far:.1f} MB / {MB_total:.1f} MB"
+    )
     sys.stdout.flush()
 
 
@@ -30,36 +45,67 @@ def main():
     """"""
     DRYAD_DOI = "10.5061/dryad.prr4xgxzq"
 
-    ## Make the directory for the data if it doesn't exist.
+    ## Make sure the command is being run from the right place and we can see the data
+    ## directory.
+
+    assert os.getcwd().endswith(
+        "BCI-cursor-control-from-speech-motor-cortex"
+    ), f"Please run the download command from the repo's top-level directory (instead of {os.getcwd()})"
 
     DATA_DIR = "dryad_files/"
-    os.makedirs(DATA_DIR, exist_ok=True)
     data_dirpath = os.path.abspath(DATA_DIR)
+    os.makedirs(data_dirpath, exist_ok=True)
+    assert os.path.exists(
+        data_dirpath
+    ), "Cannot find the data directory to download into."
 
-    ## Download the data as a zip file into the directory.
+    ## Get the list of files from the latest version on Dryad.
 
+    DRYAD_ROOT = "https://datadryad.org"
     urlified_doi = DRYAD_DOI.replace("/", "%2F")
-    zip_url = f"https://datadryad.org/api/v2/datasets/doi:{urlified_doi}/download"
 
-    ZIP_FILENAME = "dataset.zip"
-    print(f"Downloading {ZIP_FILENAME} ...")
+    versions_url = f"{DRYAD_ROOT}/api/v2/datasets/doi:{urlified_doi}/versions"
+    with urllib.request.urlopen(versions_url) as response:
+        versions_info = json.loads(response.read().decode())
 
-    zip_filepath = os.path.join(data_dirpath, ZIP_FILENAME)
-    urllib.request.urlretrieve(zip_url, zip_filepath, reporthook=display_progress_bar)
-    sys.stdout.write("\n")
+    files_url_path = versions_info["_embedded"]["stash:versions"][-1]["_links"][
+        "stash:files"
+    ]["href"]
 
-    print("Download complete.")
+    # Loop through the pages of file infos until there is no "next" page.
+    all_file_infos = []
+    while True:
+        files_url = f"{DRYAD_ROOT}{files_url_path}"
+        with urllib.request.urlopen(files_url) as response:
+            files_info = json.loads(response.read().decode())
+        all_file_infos.extend(files_info["_embedded"]["stash:files"])
+        files_url_path = files_info["_links"].get("next", {}).get("href")
 
-    ## Unzip the data files into the directory.
+        if files_url_path is None:
+            break
 
-    print(f"Extracting files from {ZIP_FILENAME} ...")
+    total_files = len(all_file_infos)
 
-    with zipfile.ZipFile(zip_filepath, "r") as zf:
-        zf.extractall(data_dirpath)
+    ## Download each file into the data directory (and unzip for certain files).
 
-    os.remove(zip_filepath)
+    for file_num, file_info in enumerate(all_file_infos):
+        filename = file_info["path"]
+        download_path = file_info["_links"]["stash:download"]["href"]
+        download_url = f"{DRYAD_ROOT}{download_path}"
 
-    print(f"Extraction complete. See data files in {data_dirpath}\n")
+        download_to_filepath = os.path.join(data_dirpath, filename)
+
+        urllib.request.urlretrieve(
+            download_url,
+            download_to_filepath,
+            reporthook=lambda *args: display_progress_bar(
+                *args,
+                message=f"({file_num + 1} / {total_files}) Downloading {filename}",
+            ),
+        )
+        sys.stdout.write("\n")
+
+    print(f"\nDownload complete. See data files in {data_dirpath}\n")
 
 
 if __name__ == "__main__":
