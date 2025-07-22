@@ -55,12 +55,12 @@ Each `.mat` file represents one task block, ~3-5 minutes in length.
 
 Streams of data (e.g., task state, neural data) are contained in `.mat` files (e.g., `t15_day00039_block00_radial8_calibration_task.mat`), which can be loaded with Python's [`scipy.io.loadmat`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.io.loadmat.html).
 
-To inspect the structure of these files, install `scipy` to your Python environment (e.g., `pip install scipy`), and follow the example below.
+As one example for inspecting the structure of these files, install `scipy` to your Python environment (e.g., `pip install scipy`), and follow the example below. (It assumes your current directory is this repo's root directory.)
 
 ```
 import scipy.io
 
-block_data = scipy.io.loadmat("./t15_day00039_block00_radial8_calibration_task.mat")
+block_data = scipy.io.loadmat("./dryad_files/t15_day00039_block00_radial8_calibration_task.mat")
 
 print(block_data.keys())
 # dict_keys(['__header__', '__version__', '__globals__', 'timestamp_sec', 'threshold_crossings', 'spike_band_power', 'assist_amount', 'cursor_position', 'target_position', 'trial_idx', 'cursor_decoder_output', 'trial_start_bin', 'target_radius', 'cursor_radius', 'array_label_by_electrode', 'dwell_requirement_sec'])
