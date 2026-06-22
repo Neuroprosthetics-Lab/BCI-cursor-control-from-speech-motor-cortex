@@ -101,7 +101,7 @@ print(block_data["target_position"].shape)
   - `target_presentation_bin`
     - In the Simultaneous Speech and Cursor Task, the bin index of when the cursor target and prompted word are displayed.
   - `cursor_go_cue_bin`
-    - In the Simultaneous Speech and Cursor Task, the bin index of when the cursor target and prompted word are displayed.
+    - In the Simultaneous Speech and Cursor Task, the bin index of when the cursor target turned green.
   - `speech_go_cue_bin`
     - In the Simultaneous Speech and Cursor Task, the bin index of when the audible beep played. Not all trials have a beep. For trials without a beep, this field's value is `-1`.
   - `trial_end_bin`
